@@ -148,11 +148,11 @@ func (rs *REST) Create(ctx api.Context, obj runtime.Object) (<-chan apiserver.RE
 					}
 				}
 			} else {
-				ip, err := balancer.CreateTCPLoadBalancer(service.Name, zone.Region, nil, service.Spec.Port, hostsFromMinionList(hosts), affinityType)
+				lb, err := balancer.CreateTCPLoadBalancer(service.Name, zone.Region, nil, service.Spec.Port, hostsFromMinionList(hosts), affinityType)
 				if err != nil {
 					return nil, err
 				}
-				service.Spec.PublicIPs = []string{ip.String()}
+				service.Spec.PublicIPs = []string{lb.DestIP.String()}
 			}
 		}
 		err := rs.registry.CreateService(ctx, service)
