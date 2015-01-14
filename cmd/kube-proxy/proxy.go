@@ -43,6 +43,7 @@ var (
 	clientConfig   = &client.Config{}
 	healthz_port   = flag.Int("healthz_port", 10249, "The port to bind the health check server. Use 0 to disable.")
 	oomScoreAdj    = flag.Int("oom_score_adj", -899, "The oom_score_adj value for kube-proxy process. Values must be within the range [-1000, 1000]")
+	portal_net     = flag.String("portal_net", "10.0.0.0/8", "The CIDR for the service network")
 )
 
 func init() {
@@ -65,12 +66,17 @@ func main() {
 	serviceConfig := config.NewServiceConfig()
 	endpointsConfig := config.NewEndpointsConfig()
 
+	_, serviceNet, err := net.ParseCIDR(*portal_net)
+	if err != nil {
+		glog.Fatalf("Invalid portal_net: %v", err)
+	}
+
 	protocol := iptables.ProtocolIpv4
 	if net.IP(bindAddress).To4() == nil {
 		protocol = iptables.ProtocolIpv6
 	}
 	loadBalancer := proxy.NewLoadBalancerRR()
-	proxier := proxy.NewProxier(loadBalancer, net.IP(bindAddress), iptables.New(exec.New(), protocol))
+	proxier := proxy.NewProxier(loadBalancer, net.IP(bindAddress), serviceNet, iptables.New(exec.New(), protocol))
 	if proxier == nil {
 		glog.Fatalf("failed to create proxier, aborting")
 	}

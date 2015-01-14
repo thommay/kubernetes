@@ -306,12 +306,13 @@ type Proxier struct {
 	listenIP     net.IP
 	iptables     iptables.Interface
 	hostIP       net.IP
+	portalNet    net.IPNet
 }
 
 // NewProxier returns a new Proxier given a LoadBalancer and an address on
 // which to listen.  Because of the iptables logic, It is assumed that there
 // is only a single Proxier active on a machine.
-func NewProxier(loadBalancer LoadBalancer, listenIP net.IP, iptables iptables.Interface) *Proxier {
+func NewProxier(loadBalancer LoadBalancer, listenIP net.IP, portalNet *net.IPNet, iptables iptables.Interface) *Proxier {
 	if listenIP.Equal(localhostIPv4) || listenIP.Equal(localhostIPv6) {
 		glog.Errorf("Can't proxy only on localhost - iptables can't do it")
 		return nil
@@ -343,6 +344,7 @@ func NewProxier(loadBalancer LoadBalancer, listenIP net.IP, iptables iptables.In
 		listenIP:     listenIP,
 		iptables:     iptables,
 		hostIP:       hostIP,
+		portalNet:    *portalNet,
 	}
 }
 
